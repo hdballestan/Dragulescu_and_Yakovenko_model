@@ -2,22 +2,22 @@ import os
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-import imageio
+import imageio.v2 as imageio
 
 
 TOTAL_MONEY = 1000
 NUMBER_OF_AGENTS = 1000
-TIME_STEPS = 80
+MAX_INTERACTIONS = NUMBER_OF_AGENTS // 2
+THRESHOLD = 0.0000005
+TIME_STEPS = 150
 
 money_distribution = [TOTAL_MONEY / NUMBER_OF_AGENTS for _ in range(NUMBER_OF_AGENTS)]
-
-MAX_INTERACTIONS = NUMBER_OF_AGENTS // 2
-
 frames = []
+entropy_list = []
 
-def plot_histogram(money_distribution, time_step):
+def plot_histogram(money_distribution, time_step, entropy):
     plt.hist(money_distribution, bins=20, edgecolor='black')
-    plt.title(f"Money Distribution at Time Step {time_step}")
+    plt.title(f"Money Distribution at Time Step {time_step}\nEntropy: {entropy:.4f}")
     plt.xlabel("Amount of Money")
     plt.ylabel("Number of Agents")
     plt.grid(True)
@@ -25,6 +25,12 @@ def plot_histogram(money_distribution, time_step):
     plt.savefig('frame.png')
     plt.close()
 
+def calculate_entropy(money_distribution, number_of_agents):
+    bins = np.histogram_bin_edges(money_distribution, bins='auto')
+    frequencies, _ = np.histogram(money_distribution, bins=bins)
+    probabilities = frequencies / number_of_agents
+    entropy = -np.sum(probabilities * np.log2(probabilities + 1e-9))
+    return entropy
 
 for t in range(TIME_STEPS):
 
@@ -50,10 +56,35 @@ for t in range(TIME_STEPS):
         money_distribution[agent_j] -= loss_j
         money_distribution[agent_i] += loss_j
 
-    plot_histogram(money_distribution, t)
+    entropy = calculate_entropy(money_distribution, NUMBER_OF_AGENTS)
+    entropy_list.append(entropy)
+
+    plot_histogram(money_distribution, t, entropy)
     frames.append(imageio.imread('frame.png'))
     os.remove('frame.png')
 
-imageio.mimsave('money_distribution_evolution.gif', frames, duration= 20 / TIME_STEPS)
+    if t > 0 and abs(entropy_list[t] - entropy_list[t-1]) < THRESHOLD * entropy_list[t-1]:
+        print(f"\nSimulation stoped at time step {t} due to entropy stabilization")
+        break
 
-print("\nSimulation completed. GIF saved as 'money_distribution_evolution.gif'.")
+imageio.mimsave('money_distribution_evolution.gif', frames, duration=20 / TIME_STEPS)
+
+entropy_frames = []
+
+for t, entropy in enumerate(entropy_list):
+    plt.plot(entropy_list[:t+1])
+    plt.title(f"Entropy evolution up to Time Step {t}")
+    plt.xlabel("Time Step")
+    plt.ylabel("Entropy")
+    plt.grid(True)
+
+    plt.savefig('entropy_frame.png')
+    plt.close()
+    entropy_frames.append(imageio.imread('entropy_frame.png'))
+    os.remove('entropy_frame.png')
+
+imageio.mimsave('entropy_evolution.gif', entropy_frames, duration=20 / TIME_STEPS)
+
+print("\nSimulation completed. GIFs saved as 'money_distribution_evolution.gif' and 'entropy_evolution.gif'.")
+
+
