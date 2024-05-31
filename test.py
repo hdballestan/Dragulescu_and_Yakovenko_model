@@ -14,9 +14,9 @@ TIME_STEPS = 150
 money_distribution = [TOTAL_MONEY / NUMBER_OF_AGENTS for _ in range(NUMBER_OF_AGENTS)]
 frames = []
 entropy_list = []
-
+print(sum(money_distribution))
 def plot_histogram(money_distribution, time_step, entropy):
-    plt.hist(money_distribution, bins=20, edgecolor='black')
+    plt.hist(money_distribution, bins=50, edgecolor='black')
     plt.title(f"Money Distribution at Time Step {time_step}\nEntropy: {entropy:.4f}")
     plt.xlabel("Amount of Money")
     plt.ylabel("Number of Agents")
@@ -49,12 +49,13 @@ for t in range(TIME_STEPS):
 
         loss_i = random.uniform(0, max_loss_i)
         loss_j = random.uniform(0, max_loss_j)
-
+        
         money_distribution[agent_i] -= loss_i
         money_distribution[agent_j] += loss_i
 
         money_distribution[agent_j] -= loss_j
         money_distribution[agent_i] += loss_j
+
 
     entropy = calculate_entropy(money_distribution, NUMBER_OF_AGENTS)
     entropy_list.append(entropy)
@@ -84,7 +85,7 @@ for t, entropy in enumerate(entropy_list):
     os.remove('entropy_frame.png')
 
 imageio.mimsave('entropy_evolution.gif', entropy_frames, duration=20 / TIME_STEPS)
-
+print(f"Dinero final: {sum(money_distribution)}")
 print("\nSimulation completed. GIFs saved as 'money_distribution_evolution.gif' and 'entropy_evolution.gif'.")
 
 
