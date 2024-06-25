@@ -25,12 +25,29 @@ def plot_histogram(money_distribution, time_step, entropy):
     plt.savefig('frame.png')
     plt.close()
 
-def calculate_entropy(money_distribution, number_of_agents):
-    bins = np.histogram_bin_edges(money_distribution, bins='auto')
-    frequencies, _ = np.histogram(money_distribution, bins=bins)
-    probabilities = frequencies / number_of_agents
-    entropy = -np.sum(probabilities * np.log2(probabilities + 1e-9))
+# def calculate_entropy(money_distribution, number_of_agents):
+#     bins = np.histogram_bin_edges(money_distribution, bins='auto')
+#     frequencies, _ = np.histogram(money_distribution, bins=bins)
+#     probabilities = frequencies / number_of_agents
+#     total_prob = np.sum(probabilities)
+#     assert np.isclose(total_prob, 1.0, atol=1e-9), f"Error: The total probabilities {total_prob} is not 1.0"
+#     entropy = -np.sum(probabilities * np.log2(probabilities + 1e-9))
+#     print(total_prob)
+#     return entropy
+
+
+def calculate_entropy(money_distribution):
+    total_money = sum(money_distribution)
+    probabilities = [money / total_money for money in money_distribution]
+    
+    # Verificación de que la suma de probabilidades sea 1
+    total_probability = sum(probabilities)
+    if not np.isclose(total_probability, 1):
+        print(f"Warning: Total probability is {total_probability}, not 1.")
+    print(total_probability) 
+    entropy = -sum(p * np.log2(p + 1e-9) for p in probabilities)
     return entropy
+
 
 for t in range(TIME_STEPS):
 
@@ -57,7 +74,8 @@ for t in range(TIME_STEPS):
         money_distribution[agent_i] += loss_j
 
 
-    entropy = calculate_entropy(money_distribution, NUMBER_OF_AGENTS)
+    # entropy = calculate_entropy(money_distribution, NUMBER_OF_AGENTS)
+    entropy = calculate_entropy(money_distribution)
     entropy_list.append(entropy)
 
     plot_histogram(money_distribution, t, entropy)
